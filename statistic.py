@@ -2,6 +2,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from log import log
+import geopandas as gpd
 
 
 # Получение данных из csv
@@ -12,6 +13,7 @@ class Stat:
 
     # Логгирование ф-ции
     @log
+    # Функция создания гистограммы
     def statistic():
         # Группировка данных по странам и подсчет количества playerid
         country_stats = df.groupby('country')['playerid'].nunique().reset_index()
@@ -28,9 +30,29 @@ class Stat:
         plt.xticks(rotation=90)
         plt.grid(axis='y')
 
-        # Убираем пустые места по бокам
-        plt.subplots_adjust(left=0.05, right=0.95, top=0.9, bottom=0.25)
-
         # Показ гистограммы
         plt.tight_layout()
+        plt.show()
+
+    # Логгирование ф-ции
+    @log
+    # Функция создания тепловой карты
+    def map():
+        # Группируем данные по странам
+        country_counts = df['country'].value_counts().reset_index()
+        country_counts.columns = ['country', 'count']
+
+        # Загружаем карту мира 
+        world = gpd.read_file("data/ne_110m_admin_0_countries.shp")  
+
+        # Объединяем данные с картой 
+        world = world.merge(country_counts, how='left', left_on='ADMIN', right_on='country')
+        world['count'] = world['count'].fillna(0) 
+
+        # Строим тепловую карту
+        fig, ax = plt.subplots(1, 1, figsize=(15, 10))
+        world.plot(column='count', cmap='Reds', linewidth=0.8, edgecolor='black', legend=True, ax=ax)
+        
+        # Показ тепловой карты
+        ax.set_title("Количество игроков Steam", fontsize=15)
         plt.show()
